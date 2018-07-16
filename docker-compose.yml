@@ -1,0 +1,97 @@
+version: '2'
+services:
+  app: # Settings for Rundeck container
+    build:
+      context: ./rundeck
+      args:
+        RUNDECK_HOST_NAME: ${RUNDECK_HOST_NAME}
+        RUNDECK_PORT: ${RUNDECK_PORT}
+        RUNDECK_REPO: ${RUNDECK_REPO}
+        MYSQL_HOST: db
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        SMTP_HOST: ${SMTP_HOST}
+        SMTP_PORT: ${SMTP_PORT}
+        SMTP_USERNAME: ${SMTP_USERNAME}
+        SMTP_PASSWORD: ${SMTP_PASSWORD}
+        SMTP_PROPS: ${SMTP_PROPS}
+        JAVA_VERSION: ${JAVA_VERSION}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - rd-data:/var/lib/rundeck/data
+      - rd-logs:/var/lib/rundeck/logs
+      - rd-storage:/var/lib/rundeck/var/storage
+      - rd-ssh:/var/lib/rundeck/.ssh
+      - rd-projects:/var/rundeck/projects
+    ports:
+      - ${RUNDECK_PORT}:${RUNDECK_PORT}
+    depends_on:
+      - db
+    links:
+      - db:mysql
+    privileged: true
+    restart: always
+  db: # Settings for MariaDB server container
+    image: centos/mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - mysql:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: always
+  web: # Settings for Nginx container
+    build:
+      context: ./nginx
+      args:
+        RUNDECK_HOST_NAME: ${RUNDECK_HOST_NAME}
+        RUNDECK_PORT: ${RUNDECK_PORT}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    ports:
+      - 80:80
+    depends_on:
+      - db
+      - app
+    links:
+      - app:rundeck
+    privileged: true
+    restart: always
+volumes: # Settings for persistent data
+  mysql:
+    driver_opts:
+      type: none
+      device: ${PWD}/data/lib/mysql
+      o: bind
+  rd-projects:
+    driver_opts:
+      type: none
+      device: ${PWD}/data/rundeck/projects
+      o: bind
+  rd-data:
+    driver_opts:
+      type: none
+      device: ${PWD}/data/lib/rundeck/data
+      o: bind
+  rd-logs:
+    driver_opts:
+      type: none
+      device: ${PWD}/data/lib/rundeck/logs
+      o: bind
+  rd-storage:
+    driver_opts:
+      type: none
+      device: ${PWD}/data/lib/rundeck/var/storage
+      o: bind
+  rd-ssh:
+    driver_opts:
+      type: none
+      device: ${PWD}/data/lib/rundeck/.ssh
+      o: bind
