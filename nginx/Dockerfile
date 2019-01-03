@@ -1,4 +1,5 @@
-FROM local/c7-systemd
+#FROM local/c7-systemd
+FROM centos/systemd
 MAINTAINER k.nagase@gooday.co.jp
 
 ARG RUNDECK_HOST_NAME

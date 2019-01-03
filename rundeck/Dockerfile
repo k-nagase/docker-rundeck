@@ -1,9 +1,11 @@
-FROM local/c7-systemd
+#FROM local/c7-systemd
+FROM centos/systemd
 MAINTAINER k.nagase@gooday.co.jp
 
 ARG RUNDECK_REPO
 ARG RUNDECK_HOST_NAME
 ARG RUNDECK_PORT
+ARG RUNDECK_VERSION
 ARG JAVA_VERSION
 ARG MYSQL_HOST
 ARG MYSQL_DATABASE
@@ -16,7 +18,7 @@ ARG SMTP_PASSWORD
 ARG SMTP_PROPS
 
 RUN yum -y install ${RUNDECK_REPO} \
-    && yum -y install java-${JAVA_VERSION} rundeck \
+    && yum -y install java-${JAVA_VERSION} rundeck-${RUNDECK_VERSION} rundeck-config-${RUNDECK_VERSION} \
     && yum clean all
 
 # Configuration /etc/rundeck/rundeck-config.groovy
